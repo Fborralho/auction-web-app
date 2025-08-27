@@ -1,0 +1,517 @@
+openapi: 3.0.0
+
+info:
+  title: QuickBid
+  version: '1.0'
+
+tags:
+  - name: M01
+  - name: M02
+  - name: M03
+  - name: M04
+  - name: M05
+
+servers:
+  - url: 'http://localhost:8000'
+    description: Localhost server
+
+paths:
+  /login:
+    get:
+      operationId: R101
+      summary: Get Login
+      description: Retrieve the login page or check if the user session is active. PUB
+      tags:
+        - M01
+      responses:
+        '200':
+          description: Login page or session status retrieved successfully
+    post:
+      operationId: R102
+      summary: User Login
+      description: Authenticate a user and start a session. PUB
+      tags:
+        - M01
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Successful login
+        '401':
+          description: Unauthorized - Invalid credentials
+
+  /logout:
+    get:
+      operationId: R103
+      summary: User Logout
+      description: Log out the current user and end the session. USR
+      tags:
+        - M01
+      responses:
+        '200':
+          description: Successful logout
+
+  /register:
+    post:
+      operationId: R104
+      summary: User Registration
+      description: Register a new user account. PUB
+      tags:
+        - M01
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                name:
+                  type: string
+              required:
+                - email
+                - password
+                - name
+      responses:
+        '201':
+          description: Account successfully created
+        '400':
+          description: Bad request - Validation errors
+
+  /auctions:
+    post:
+      operationId: R201
+      summary: Create Auction
+      description: Create a new auction. USR
+      tags:
+        - M02
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                initial_value:
+                  type: number
+                lifetime:
+                  type: string
+                  format: date-time
+                location:
+                  type: string
+                description:
+                  type: string
+                id_creator:
+                  type: integer
+              required:
+                - name
+                - category
+                - initial_value
+                - lifetime
+                - location
+                - description
+                - id_creator
+      responses:
+        '201':
+          description: Auction successfully created
+        '400':
+          description: Bad request - Validation errors
+
+  '/auctions/{auction_id}':
+    get:
+      operationId: R202
+      summary: Get Auction
+      description: Retrieve the details of a specific auction. PUB
+      tags:
+        - M02
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: The ID of the auction
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Auction details retrieved successfully
+        '404':
+          description: Auction not found
+    put:
+      operationId: R203
+      summary: Edit Auction
+      description: Edit the details of an existing auction. USR
+      tags:
+        - M02
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: The ID of the auction to edit
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                initial_value:
+                  type: number
+                lifetime:
+                  type: string
+                  format: date-time
+                location:
+                  type: string
+                description:
+                  type: string
+              required:
+                - name
+                - category
+                - initial_value
+                - lifetime
+                - location
+                - description
+      responses:
+        '200':
+          description: Auction successfully updated
+        '400':
+          description: Bad request - Validation errors
+        '404':
+          description: Auction not found
+    post:
+      operationId: R204
+      summary: Cancel Auction
+      description: Cancel an auction. The cancellation is only possible if the auction has no bids. The auction will be placed in the auction_results table. USR
+      tags:
+        - M02
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: The ID of the auction to cancel
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Auction successfully cancelled
+        '404':
+          description: Auction not found
+
+  '/auctions/{auction_id}/bids':
+    get:
+      operationId: R205
+      summary: Get Bidding History
+      description: Retrieve the bidding history of a specific auction. PUB
+      tags:
+        - M02
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: The ID of the auction
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bidding history retrieved successfully
+        '404':
+          description: Auction not found
+    post:
+      operationId: R206
+      summary: Bid on Auction
+      description: Place a bid on an auction. USR
+      tags:
+        - M02
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: The ID of the auction to bid on
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                bidAmount:
+                  type: number
+              required:
+                - bidAmount
+      responses:
+        '201':
+          description: Bid successfully placed
+        '400':
+          description: Bad request - Validation errors
+        '404':
+          description: Auction not found
+
+  /auctions/search:
+    get:
+      operationId: R301
+      summary: Unified Auction Search
+      description: Search for auctions using various search modes (basic, full-text, exact match) and filters. PUB
+      tags:
+        - M03
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: Keyword to search for in auction titles and descriptions
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          description: Filter auctions by category
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          required: false
+          description: Minimum price to filter auctions
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          required: false
+          description: Maximum price to filter auctions
+          schema:
+            type: number
+        - name: mode
+          in: query
+          required: false
+          description: Search mode. Defines the search type.
+          schema:
+            type: string
+            enum: [basic, full-text, exact]
+            default: basic
+      responses:
+        '200':
+          description: Successful search with filtered auction listings
+        '400':
+          description: Bad request - Invalid search parameters
+
+  /profile:
+    get:
+      operationId: R401
+      summary: View Profile
+      description: View personal profile information. USR
+      tags:
+        - M04
+      responses:
+        '200':
+          description: Successful profile retrieval
+
+  /profile/auctions:
+    get:
+      operationId: R402
+      summary: View My Auctions
+      description: View auctions created by the user. USR
+      tags:
+        - M04
+      responses:
+        '200':
+          description: Successful response with auction listings
+
+  /admin/members:
+    get:
+      operationId: R501
+      summary: Administer Users Accounts
+      description: 'Search, view, edit and create user accounts. ADM'
+      tags:
+        - M05
+      responses:
+        '200':
+          description: Successful user management
+    post:
+      operationId: R502
+      summary: Create User Account
+      description: Create a new user account. ADM
+      tags:
+        - M05
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                name:
+                  type: string
+              required:
+                - email
+                - password
+                - name
+      responses:
+        '201':
+          description: Account successfully created
+        '400':
+          description: Bad request - Validation errors
+
+  '/admin/members/{member_id}':
+    get:
+      operationId: R503
+      summary: Get User By ID
+      description: Retrieve the details of a specific user by ID. ADM
+      tags:
+        - M05
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details retrieved successfully
+        '404':
+          description: User not found
+    put:
+      operationId: R504
+      summary: Edit User
+      description: Edit the details of a user account. ADM
+      tags:
+        - M05
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          description: The ID of the user to edit
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                name:
+                  type: string
+              required:
+                - email
+                - password
+                - name
+      responses:
+        '200':
+          description: User successfully updated
+        '400':
+          description: Bad request - Validation errors
+        '404':
+          description: User not found
+
+  '/admin/members/{member}/delete':
+    put:
+      operationId: R505
+      summary: Delete User
+      description: Delete a user account. ADM
+      tags:
+        - M05
+      parameters:
+        - name: member
+          in: path
+          required: true
+          description: The ID of the user to delete
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User successfully deleted
+        '404':
+          description: User not found
+
+  '/admin/members/{member}/block':
+    put:
+      operationId: R506
+      summary: Block User
+      description: Block a user account. ADM
+      tags:
+        - M05
+      parameters:
+        - name: member
+          in: path
+          required: true
+          description: The ID of the user to block
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User successfully blocked
+        '404':
+          description: User not found
+
+  '/admin/members/{member}/unblock':
+    put:
+      operationId: R507
+      summary: Unblock User
+      description: Unblock a user account. ADM
+      tags:
+        - M05
+      parameters:
+        - name: member
+          in: path
+          required: true
+          description: The ID of the user to unblock
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User successfully unblocked
+        '404':
+          description: User not found
+
+  '/admin/members/{member}/restore':
+    put:
+      operationId: R508
+      summary: Restore User
+      description: Restore a user account. ADM
+      tags:
+        - M05
+      parameters:
+        - name: member
+          in: path
+          required: true
+          description: The ID of the user to restore
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User successfully restored
+        '404':
+          description: User not found
